@@ -77,6 +77,20 @@ app.post('/api/users/:_id/exercises', (req, res) => {
   });
 });
 
+// GET request to /api/users to get all users
+app.get('/api/users', (req, res) => {
+  User.find({}, function (err, data) {
+    if (err) return console.log(err);
+    const usersOnly = data.map(user => {
+      return {
+        username: user.username,
+        _id: user._id
+      }
+    });
+    res.send(usersOnly);
+  });
+});
+
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
 })
