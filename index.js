@@ -91,6 +91,30 @@ app.get('/api/users', (req, res) => {
   });
 });
 
+// GET request to /api/users/:_id/logs to get exercise log of a user
+app.get('/api/users/:_id/logs', (req, res) => {
+  const userId = req.params._id;
+  const from = req.query.from;
+  const to = req.query.to;
+  const limit = req.query.limit;
+  User.findById({_id: userId}, function (err, data) {
+    if (err) return console.log(err);
+    const logNoId = data.log.map(log => {
+      return {
+        description: log.description,
+        duration: log.duration,
+        date: log.date
+      }
+    });
+    res.json({
+      username: data.username,
+      count: data.count,
+      _id: data._id,
+      log: logNoId
+    });
+  });
+});
+
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
 })
