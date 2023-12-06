@@ -3,6 +3,9 @@ const app = express()
 const cors = require('cors')
 require('dotenv').config()
 
+// Add dayjs library for validation of date format
+const dayjs = require('dayjs');
+
 // Middleware to encode the post request
 app.use(express.urlencoded({extended: false}));
 
@@ -49,12 +52,22 @@ app.post('/api/users', (req, res) => {
 
 // POST /api/users/:_id/exercises update exercise log
 app.post('/api/users/:_id/exercises', (req, res) => {
+  
   const userId = req.params._id;
   const desc = req.body.description;
   const duration = req.body.duration;
   let date = req.body.date;
-  if (date === '') date = Date.now();
-  const logDate = new Date(date).toDateString();
+  let logDate;
+  
+  if (date === undefined) {
+    date = Date.now();
+    logDate = new Date(date).toDateString();
+  } else if(dayjs(date).isValid()) {
+    logDate = new Date(date).toDateString();
+  } else {
+    res.json({ error: 'Invalid date' });
+  };
+  
   User.findById({_id: userId}, function (err, data) {
     if (err) return console.log(err);
     data.log.push({
