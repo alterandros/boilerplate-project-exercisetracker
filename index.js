@@ -110,22 +110,80 @@ app.get('/api/users/:_id/logs', (req, res) => {
   const from = req.query.from;
   const to = req.query.to;
   const limit = req.query.limit;
-  User.findById({_id: userId}, function (err, data) {
-    if (err) return console.log(err);
-    const logNoId = data.log.map(log => {
-      return {
-        description: log.description,
-        duration: log.duration,
-        date: log.date
-      }
-    });
-    res.json({
-      username: data.username,
-      count: data.count,
-      _id: data._id,
-      log: logNoId
-    });
-  });
+  console.log(limit, from, to);
+    // check if filters are applied
+    if (from || to || limit) {
+      User.findById({_id: userId}, function (err, data) {
+        if (err) return console.log(err);
+        const fromDate = new Date(from);
+        const toDate = new Date(to);
+        const intLimit = parseInt(limit);
+        let filterLog;
+        
+        if (from && to) {
+          filterLog = data.log.filter(log => {
+            const logDate = new Date(log.date);
+            return logDate.getTime() >= fromDate.getTime() && logDate.getTime() <= toDate.getTime();
+          });
+        } else {
+          filterLog = data.log;
+        };
+
+        if (intLimit) {// if limit, we reduce log
+          const reducedLog = filterLog.slice(0, intLimit);
+          const logNoId = reducedLog.map(log => {
+              return {
+                description: log.description,
+                duration: log.duration,
+                date: log.date
+              }
+            });
+            res.json({
+              _id: data._id,
+              username: data.username,
+              from: from,
+              to: to,
+              count: logNoId.length,
+              log: logNoId
+            });
+        } else {// else we return whole filtered log
+          const logNoId = filterLog.map(log => {
+            return {
+              description: log.description,
+              duration: log.duration,
+              date: log.date
+            }
+          });
+          res.json({
+            _id: data._id,
+            username: data.username,
+            from: from,
+            to: to,
+            count: logNoId.length,
+            log: logNoId
+          });
+        }
+        
+
+        });
+    } else {// no filters are present return all logs
+      User.findById({_id: userId}, function (err, data) {
+        if (err) return console.log(err);
+        const logNoId = data.log.map(log => {
+          return {
+            description: log.description,
+            duration: log.duration,
+            date: log.date
+          }
+        });
+        res.json({
+          username: data.username,
+          count: data.count,
+          _id: data._id,
+          log: logNoId
+        });
+      });
+    };
 });
 
 const listener = app.listen(process.env.PORT || 3000, () => {
